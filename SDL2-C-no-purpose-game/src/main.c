@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
 
@@ -12,6 +13,8 @@
 
 #define MAX_ENTITIES 50
 
+#define RANDOM_NUMBER(minimumNumber, maximumNumber) (int)((rand() % (maximumNumber - minimumNumber + 1)) + maximumNumber)
+
 #define REFRESH SDL_RenderPresent(renderer)
 
 SDL_Window *window = NULL;
@@ -23,7 +26,7 @@ typedef enum {
     DOWN = SDLK_DOWN,
     LEFT = SDLK_LEFT,
     RIGHT = SDLK_RIGHT,
-    STAY = false;
+    STAY = false
 } directions;
 
 typedef struct {
@@ -43,6 +46,9 @@ void initializeColors();
 
 void initGame();
 void moveInGame(directions direction);
+void inGameEntitiesGenerator();
+void renderGameOverlay();
+void renderEntitiesOnScreen();
 void game();
 
 int main() {
@@ -176,10 +182,20 @@ void initGame() {
     player.rect.w = 50;
     player.rect.h = 50;
 
-    SDL_SetRenderDrawColor(renderer, player.color.r, player.color.g, player.color.b, player.color.a);
-    SDL_RenderFillRect(renderer, &player.rect);
+    inGameEntitiesGenerator();
+}
 
-    REFRESH;
+void inGameEntitiesGenerator() {
+    for(int i = 0; i < MAX_ENTITIES; i++) {
+        entities[i].color = blue;
+        
+        entities[i].rect.x = RANDOM_NUMBER(0, GAME_WORLD_WIDTH);
+        entities[i].rect.y = RANDOM_NUMBER(0, GAME_WORLD_HEIGHT);
+        entities[i].rect.w = 50;
+        entities[i].rect.h = 50;
+
+        /* DEBUG */ printf("[DEBUG] inGameEntitiesGenerator() Created Entity: %d of %d, x = %d, y = %d\n", i + 1, MAX_ENTITIES, entities[i].rect.x, entities[i].rect.y);
+    }
 }
 
 void moveInGame(directions direction) {
@@ -206,6 +222,33 @@ void moveInGame(directions direction) {
     }
 }
 
+void renderGameOverlay() {
+    SDL_SetRenderDrawColor(renderer, player.color.r, player.color.g, player.color.b, player.color.a);
+    SDL_RenderFillRect(renderer, &player.rect);
+}
+
+void renderEntitiesOnScreen() {
+    for(int i = 0; i < MAX_ENTITIES; i++) {
+        if(true) { // Add check to not draw entities that are not on the screen
+            SDL_Rect partOfTheEntityToDraw;
+
+            partOfTheEntityToDraw.x = entities[i].rect.x;
+            partOfTheEntityToDraw.y = entities[i].rect.y;
+            partOfTheEntityToDraw.w = entities[i].rect.w;
+            partOfTheEntityToDraw.h = entities[i].rect.h;
+
+            SDL_SetRenderDrawColor(renderer, entities[i].color.r, entities[i].color.g, entities[i].color.b, entities[i].color.a);
+            SDL_RenderFillRect(renderer, &partOfTheEntityToDraw);
+        }
+    }
+}
+
 void game() {
     moveInGame(direction);
+
+    renderEntitiesOnScreen();
+
+    renderGameOverlay();
+
+    REFRESH;
 }
