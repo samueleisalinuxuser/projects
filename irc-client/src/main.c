@@ -3,47 +3,61 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#define LIBERA_CHAT_ADDRESS "51.89.226.78" // "irc.libera.chat"
-#define LIBERA_CHAT_PORT 6697
-/* [ useless binding ] */ #define ADDRESS LIBERA_CHAT_ADDRESS // remove
-/* [ useless binding ] */ #define PORT LIBERA_CHAT_PORT // remove
 #define MAX_MESSAGES 2000
-#define NICKNAME_MAX_LENGHT 9
 
 int socketDescriptor;
-struct sockaddr_in serverAddress;
+struct sockaddr_in LiberaChat;
 char serverMessages[MAX_MESSAGES], clientMessages[MAX_MESSAGES];
 
-int initialize();
+void initializeServers();
+int initializeSocket();
+int connectToIRCServer(struct sockaddr_in IRCServer);
+void quit();
 
 int main() {
-    initialize();
+    initializeServers();
+
+    initializeSocket();
+
+    /* [ TESTING ] */ connectToIRCServer(LiberaChat);
+
+    quit();
 
     return 0;
 }
 
-int initialize() {
-    socketDescriptor = socket(AF_INET, SOCK_STREAM, 0); // socket(int domain, int type, int protocol);
+void initializeServers() {
+    LiberaChat.sin_family = AF_INET;
+    LiberaChat.sin_addr.s_addr = inet_addr(getaddrinfo("irc.libera.chat"));
+    LiberaChat.sin_port = htons(6697);
+}
+
+int initializeSocket() {
+    socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
     if(socketDescriptor < 0) {
-        printf("[ ERROR ] initialize() socketDesciptor Unable to connect\n");
-        
+        printf("[ ERROR ] initialize() socketDescriptor Failed to create socket\n");
+
         return -1;
     }
 
     printf("[ LOG ] initialize() socketDescriptor Socket created\n");
 
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(PORT);
-    serverAddress.sin_addr.s_addr = inet_addr(ADDRESS);
+    return 0;
+}
 
-    if(connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0) {
-        printf("[ ERROR ] initialize() connect() Unable to connect\n");
+int connectToIRCServer(struct sockaddr_in IRCServer) {
+    if(connect(socketDescriptor, (struct sockaddr *)&IRCServer, sizeof(IRCServer)) < 0) {
+        printf("[ ERROR ] connectToIRCServer Unable to connect to %s : %d\n", IRCServer.sin_addr, IRCServer.sin_port);
 
         return -1;
     }
 
-    /* fix preprocessor here */ printf("[ LOG ] initialize() connect() Connected to %s : %s\n", ADDRESS, PORT);
+    printf("[ LOG ] connectToIRCServer() Connected %s : %d\n", IRCServer.sin_addr, IRCServer.sin_port);
 
     return 0;
+}
+
+void quit() {
+    quit(socketDescriptor);
 }
