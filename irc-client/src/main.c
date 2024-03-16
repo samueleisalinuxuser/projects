@@ -49,7 +49,7 @@ int initializeSocket() {
 }
 
 int connectToIRCServer(struct sockaddr_in IRCServer) {
-    if((connectionStatus = connect(socketDescriptor, (struct sockaddr *)&IRCServer, sizeof(IRCServer))) < 0) {
+    if(connect(socketDescriptor, (struct sockaddr *)&IRCServer, sizeof(IRCServer)) < 0) {
         printf(
             "\n[ ERROR ] [ connectToIRCServer ]\
             \n\tUnable to connect to:\
