@@ -2,10 +2,12 @@
 #include <stdbool.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #define MAX_MESSAGES 2000
 
 int socketDescriptor;
+struct hostent *LiberaChatHostName;
 struct sockaddr_in LiberaChat;
 char serverMessages[MAX_MESSAGES], clientMessages[MAX_MESSAGES];
 
@@ -21,14 +23,15 @@ int main() {
 
     /* [ TESTING ] */ connectToIRCServer(LiberaChat);
 
-    quit();
+    // quit();
 
     return 0;
 }
 
 void initializeServers() {
+    LiberaChatHostName = gethostbyname("irc.libera.chat");
     LiberaChat.sin_family = AF_INET;
-    LiberaChat.sin_addr.s_addr = inet_addr(getaddrinfo("irc.libera.chat"));
+    LiberaChat.sin_addr.s_addr = inet_addr(LiberaChatHostName -> h_addr);
     LiberaChat.sin_port = htons(6697);
 }
 
@@ -36,28 +39,52 @@ int initializeSocket() {
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
     if(socketDescriptor < 0) {
-        printf("[ ERROR ] initialize() socketDescriptor Failed to create socket\n");
+        printf("[ ERROR ] [ initialize() ] [ socketDescriptor ]\n\tFailed to create socket\n");
 
         return -1;
     }
 
-    printf("[ LOG ] initialize() socketDescriptor Socket created\n");
+    printf("[ LOG ] [ initialize() ] [ socketDescriptor ]\n\tSocket created\n");
 
     return 0;
 }
 
 int connectToIRCServer(struct sockaddr_in IRCServer) {
     if(connect(socketDescriptor, (struct sockaddr *)&IRCServer, sizeof(IRCServer)) < 0) {
-        printf("[ ERROR ] connectToIRCServer Unable to connect to %s : %d\n", IRCServer.sin_addr, IRCServer.sin_port);
+        printf(
+            "[ ERROR ] [ connectToIRCServer ]\
+            \n\tUnable to connect to:\
+            \n\t[ IRCServer.sin_addr ] : %s\
+            \n\t[ <chat>HostName -> h_addr ] : %s\
+            \n\t[ <chat>HostName -> h_name ] : %s\
+            \n\t[ IRCServer.sin_port ] : %d\
+            \n",
+            (char *)inet_ntoa(IRCServer.sin_addr),
+            inet_ntoa((struct in_addr **)LiberaChatHostName -> h_addr),
+            LiberaChatHostName -> h_name,
+            IRCServer.sin_port
+        );
 
         return -1;
     }
 
-    printf("[ LOG ] connectToIRCServer() Connected %s : %d\n", IRCServer.sin_addr, IRCServer.sin_port);
+    printf(
+        "[ ERROR ] [ connectToIRCServer ]\
+        \n\tConnect to:\
+        \n\t[ IRCServer.sin_addr ] : %s\
+        \n\t[ <chat>HostName -> h_addr ] : %s\
+        \n\t[ <chat>HostName -> h_name ] : %s\
+        \n\t[ IRCServer.sin_port ] : %d\
+        \n",
+        (char *)inet_ntoa(IRCServer.sin_addr),
+        inet_ntoa((struct in_addr **)LiberaChatHostName -> h_addr),
+        LiberaChatHostName -> h_name,
+        IRCServer.sin_port
+    );
 
     return 0;
 }
 
-void quit() {
+/*void quit() {
     quit(socketDescriptor);
-}
+}*/
